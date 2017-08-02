@@ -1,0 +1,119 @@
+#include<iostream>
+#include<cstdlib>
+
+#include "parser.h"
+#include "tokenizer.h"
+#include <set>
+#include <stack>
+
+using namespace std;
+
+int Precedence(string op)
+{
+  string unaryarr[]={"sin", "cos", "tan", "acos","asin", "atan","abs"};
+  set<string> unary(unaryarr, unaryarr + 6);
+  if( unary.find(op) != unary.end() )
+    return 4;
+
+  if( op == "^" )
+    return 3;
+
+  if(op == "*" || op == "/" )
+    return 2;
+
+  if(op == "+" || op == "-" )
+    return 1;
+
+  cerr<<"\nUnrecognized operator "<<op;
+  return -1;
+
+}
+
+void EvalSubExpression(stack<Token>& operators, stack<double>& operands)
+{
+  /*
+   * Keep evaluating the operators in the operators stack till the stack is
+   * empty or you meet the "("
+   */
+}
+
+void HandleOperator(Token& cur, stack<Token>& operators, stack<double>&operands)
+{
+
+  /* Push the cur operator into the operators stack. But be careful! you might
+   * need to evaluate some operators from the stack top 
+   * before pushing this new operator depending on the operator precedence
+   */
+}
+
+int main()
+{
+  string expr;
+  stack<double> operands;
+  stack<Token> operators;
+  Token cur;
+
+  /* create a parser object. This object helps dividing the input
+   * expression (string) into tokens. Every token is either: a number, an
+   * operator, a function, or a bracket.
+   * The tokens are arranged into a queue. See class TokenQueue.
+   */
+  TokenQueue tokenizer;
+
+  cout<< "Enter an expression an press Enter to calculate the result.";
+  cout<< "Enter 0 expression to quit.";
+  cout<<"";
+
+  do
+  {
+    // request an expression
+    cout<<"> "; 
+    cin>>expr;
+
+    if (expr != "0")
+      tokenizer.SetExpr(expr); // fill the token queue
+    while(! tokenizer.tokens.empty())
+    {
+      cur= tokenizer.tokens.front(); // dequeue one entry from the token queue
+      
+      //process this entry
+      if(cur.type == Parser::NUMBER)
+        operands.push(atof(cur.expr.c_str()));
+      else if(cur.expr == "(")
+        operators.push(cur);
+      else if(cur.expr == ")")
+        EvalSubExpression(operators, operands);
+      else if( (cur.type == Parser::FUNCTION) || (cur.type == Parser::DELIMETER))
+        HandleOperator(cur, operators, operands);
+      else
+      {
+        cerr<<"unrecognized token";
+        return EXIT_FAILURE;
+      }
+      tokenizer.tokens.pop();
+    }
+    
+    // The input is completely processed. Keep evaluating the stacks contents
+    // till all operators are evaluated.  
+    while(!operators.empty())
+      EvalSubExpression(operators, operands);
+    
+    // At this point the operands stack should have exactly one entry,
+    // otherwise, there is some error in the input expression. 
+    double result= operands.top();
+    operands.pop();
+    if(! operands.empty() )
+      cerr<< "\nwrong expression";
+    else
+      cout<< "\nResult: " << result << endl;
+
+    // Clear the stacks in order to prepare for evaluating a new expression
+    while(! operands.empty())
+      operands.pop();
+    while(! operators.empty())
+      operators.pop();
+  } while (expr != "0");
+
+
+  return EXIT_SUCCESS;
+}
